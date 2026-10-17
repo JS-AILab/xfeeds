@@ -13,6 +13,7 @@ Env (or put KEY=value lines in hotaisle.env next to this script):
   SLACK_WEBHOOK_URL / DISCORD_WEBHOOK_URL                            [optional]
   TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID                              [optional]
   WHATSAPP_PHONE + CALLMEBOT_API_KEY  WhatsApp via callmebot.com     [optional]
+  MAC_ALERT=0            turn off the loud sound + pop-up on macOS (on by default)
 
 Usage:
   python3 hotaisle_alert.py            check once (for cron / GitHub Actions)
@@ -20,9 +21,10 @@ Usage:
   python3 hotaisle_alert.py --loop 120 --for 840   same, but stop after 840 seconds
   python3 hotaisle_alert.py --test     send a test notification and exit
 """
-import json, os, sys, time, urllib.parse, urllib.request
+import json, os, subprocess, sys, time, urllib.parse, urllib.request
 
-ENV_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hotaisle.env")
+HERE = os.path.dirname(os.path.abspath(__file__))
+ENV_FILE = os.path.join(HERE, "hotaisle.env")
 if os.path.exists(ENV_FILE):
     for line in open(ENV_FILE):
         k, sep, v = line.strip().partition("=")
@@ -30,7 +32,7 @@ if os.path.exists(ENV_FILE):
             os.environ.setdefault(k.strip(), v.strip().strip('"'))
 
 API = "https://admin.hotaisle.app/api"
-STATE = os.environ.get("HOTAISLE_STATE", "hotaisle_state.json")
+STATE = os.environ.get("HOTAISLE_STATE", os.path.join(HERE, "hotaisle_state.json"))
 WANT = {int(n) for n in os.environ.get("HOTAISLE_GPU_COUNTS", "4,8").split(",") if n.strip()}
 
 def get(path):
@@ -74,10 +76,21 @@ def post(url, payload, headers=None):
     h = {"Content-Type": "application/json"} if not isinstance(payload, bytes) else {}
     urllib.request.urlopen(urllib.request.Request(url, data=data, headers={**h, **(headers or {})}), timeout=20)
 
+def mac_alert(title, body):
+    """Max volume, loud repeated sound, spoken message and a pop-up that stays until dismissed."""
+    esc = lambda t: t.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+    subprocess.run(["osascript", "-e", "set volume output volume 100 without output muted"], check=False)
+    subprocess.run(["osascript", "-e", f'display notification "{esc(body)}" with title "{esc(title)}" sound name "Sosumi"'], check=False)
+    subprocess.Popen(["osascript", "-e", f'display alert "{esc(title)}" message "{esc(body)}" as critical'])
+    for _ in range(6):
+        subprocess.run(["afplay", "/System/Library/Sounds/Sosumi.aiff"], check=False)
+    subprocess.run(["say", title], check=False)
+
 def notify(title, body):
     print(f"{title}\n{body}")
     sent, env = 0, os.environ.get
     channels = [
+        (sys.platform == "darwin" and env("MAC_ALERT", "1") != "0", lambda: mac_alert(title, body)),
         (env("NTFY_TOPIC"), lambda: post(f"https://ntfy.sh/{env('NTFY_TOPIC')}", body.encode(),
             {"Title": title, "Priority": "high", "Tags": "rotating_light",
              "Click": "https://hotaisle.xyz"})),
@@ -99,7 +112,7 @@ def notify(title, body):
             except Exception as e:
                 print("notify failed:", e, file=sys.stderr)
     if not sent:
-        print("(no notification channel configured; set NTFY_TOPIC or a webhook)", file=sys.stderr)
+        print("(no notification channel configured; set NTFY_TOPIC, WhatsApp or a webhook)", file=sys.stderr)
 
 def check():
     now = available()

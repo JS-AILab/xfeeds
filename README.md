@@ -14,6 +14,10 @@ Limits: the feed only goes back a few days through this API, and it does not inc
 
 `hotaisle_alert.py` alerts when Hot Aisle has a 4-GPU or 8-GPU machine (VM or bare metal) available. It polls `admin.hotaisle.app/api/teams/<team>/{virtual_machines,bare_metal}/available/` and notifies once each time a config opens up.
 
+**On a Mac (easiest):** put `hotaisle_alert.py` and `install_mac.sh` in one folder and run `bash install_mac.sh` once. It asks for your Hot Aisle API key and team handle, then checks every 2 minutes in the background (it keeps going after restarts, but not while the Mac is asleep) and plays a loud alert with a pop-up when a 4x or 8x machine shows up. Log: `~/hotaisle/hotaisle.log`. To uninstall, see the top of `install_mac.sh`.
+
+Other setups:
+
 1. Get an API token and team handle from Hot Aisle (`ssh admin.hotaisle.app`).
 2. Pick a notification channel. The easiest is [ntfy](https://ntfy.sh): install the app, subscribe to a hard-to-guess topic name, and set `NTFY_TOPIC` to it. Slack, Discord, Telegram and WhatsApp (via [CallMeBot](https://www.callmebot.com/blog/free-api-whatsapp-messages/): set `WHATSAPP_PHONE` like `+15551234567` and `CALLMEBOT_API_KEY`) also work (see the script header).
 3. Put your settings in `hotaisle.env` next to the script (it is git-ignored, so it never gets committed):
