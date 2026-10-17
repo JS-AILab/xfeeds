@@ -16,8 +16,15 @@ Limits: the feed only goes back a few days through this API, and it does not inc
 
 1. Get an API token and team handle from Hot Aisle (`ssh admin.hotaisle.app`).
 2. Pick a notification channel. The easiest is [ntfy](https://ntfy.sh): install the app, subscribe to a hard-to-guess topic name, and set `NTFY_TOPIC` to it. Slack, Discord, Telegram and WhatsApp (via [CallMeBot](https://www.callmebot.com/blog/free-api-whatsapp-messages/): set `WHATSAPP_PHONE` like `+15551234567` and `CALLMEBOT_API_KEY`) also work (see the script header).
-3. Run it:
-   - Locally: `HOTAISLE_API_KEY=... HOTAISLE_TEAM_HANDLE=... NTFY_TOPIC=... python3 hotaisle_alert.py --loop 120`
-   - On GitHub Actions: add those values as repo secrets. `.github/workflows/hotaisle-alert.yml` checks every 2 minutes (each scheduled run loops for ~14 minutes, since GitHub's minimum schedule is 5 minutes); trigger it by hand once from the Actions tab to check it works.
+3. Put your settings in `hotaisle.env` next to the script (it is git-ignored, so it never gets committed):
+   ```
+   HOTAISLE_API_KEY=...
+   HOTAISLE_TEAM_HANDLE=...
+   WHATSAPP_PHONE=+15551234567
+   CALLMEBOT_API_KEY=...
+   ```
+4. Run it on a machine that stays on: `python3 hotaisle_alert.py --loop 120` checks every 2 minutes. To keep it running after you close the terminal: `nohup python3 hotaisle_alert.py --loop 120 > hotaisle.log 2>&1 &`.
+
+The GitHub Actions workflow (`.github/workflows/hotaisle-alert.yml`) is manual-only, because a 2-minute schedule would use more Actions minutes than a private repo's free plan includes.
 
 `python3 hotaisle_alert.py --test` sends a test notification. Set `HOTAISLE_GPU_COUNTS` (default `4,8`) to watch other sizes.

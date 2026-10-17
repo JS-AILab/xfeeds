@@ -5,7 +5,7 @@ notification when a 4x or 8x GPU VM / bare-metal box goes from unavailable to
 available. State is kept in hotaisle_state.json so you get one alert per
 opening, not one per poll.
 
-Env:
+Env (or put KEY=value lines in hotaisle.env next to this script):
   HOTAISLE_API_KEY       API token (Hot Aisle admin TUI: ssh admin.hotaisle.app)
   HOTAISLE_TEAM_HANDLE   your team handle
   HOTAISLE_GPU_COUNTS    GPU counts to watch, default "4,8"
@@ -21,6 +21,13 @@ Usage:
   python3 hotaisle_alert.py --test     send a test notification and exit
 """
 import json, os, sys, time, urllib.parse, urllib.request
+
+ENV_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hotaisle.env")
+if os.path.exists(ENV_FILE):
+    for line in open(ENV_FILE):
+        k, sep, v = line.strip().partition("=")
+        if sep and not k.startswith("#"):
+            os.environ.setdefault(k.strip(), v.strip().strip('"'))
 
 API = "https://admin.hotaisle.app/api"
 STATE = os.environ.get("HOTAISLE_STATE", "hotaisle_state.json")
