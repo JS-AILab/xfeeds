@@ -9,3 +9,15 @@ Tools for watching the CLS Telegraph (财联社电报) feed for AI, chips, indiu
 - `instructions/`: the step-by-step instructions given to the collection and verification passes.
 
 Limits: the feed only goes back a few days through this API, and it does not include CLS paid-column content.
+
+## Hot Aisle GPU alert
+
+`hotaisle_alert.py` alerts when Hot Aisle has a 4-GPU or 8-GPU machine (VM or bare metal) available. It polls `admin.hotaisle.app/api/teams/<team>/{virtual_machines,bare_metal}/available/` and notifies once each time a config opens up.
+
+1. Get an API token and team handle from Hot Aisle (`ssh admin.hotaisle.app`).
+2. Pick a notification channel. The easiest is [ntfy](https://ntfy.sh): install the app, subscribe to a hard-to-guess topic name, and set `NTFY_TOPIC` to it. Slack, Discord and Telegram also work (see the script header).
+3. Run it:
+   - Locally: `HOTAISLE_API_KEY=... HOTAISLE_TEAM_HANDLE=... NTFY_TOPIC=... python3 hotaisle_alert.py --loop 120`
+   - On GitHub Actions: add those values as repo secrets. `.github/workflows/hotaisle-alert.yml` runs every 10 minutes; trigger it by hand once from the Actions tab to check it works.
+
+`python3 hotaisle_alert.py --test` sends a test notification. Set `HOTAISLE_GPU_COUNTS` (default `4,8`) to watch other sizes.
