@@ -2,7 +2,9 @@ name: Hot Aisle GPU alert
 
 on:
   schedule:
-    - cron: "*/10 * * * *"   # every 10 min (GitHub may delay scheduled runs)
+    # GitHub's minimum schedule is 5 min and runs often start late, so each run
+    # checks every 2 min for ~14 min; the next queued run picks up after it.
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 concurrency: hotaisle-alert
@@ -10,7 +12,7 @@ concurrency: hotaisle-alert
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache/restore@v4
@@ -18,7 +20,7 @@ jobs:
           path: hotaisle_state.json
           key: hotaisle-state-${{ github.run_id }}
           restore-keys: hotaisle-state-
-      - run: python3 hotaisle_alert.py
+      - run: python3 hotaisle_alert.py --loop 120 --for 840
         env:
           HOTAISLE_API_KEY: ${{ secrets.HOTAISLE_API_KEY }}
           HOTAISLE_TEAM_HANDLE: ${{ secrets.HOTAISLE_TEAM_HANDLE }}

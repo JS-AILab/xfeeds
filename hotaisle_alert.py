@@ -16,6 +16,7 @@ Env:
 Usage:
   python3 hotaisle_alert.py            check once (for cron / GitHub Actions)
   python3 hotaisle_alert.py --loop 120 check every 120 seconds
+  python3 hotaisle_alert.py --loop 120 --for 840   same, but stop after 840 seconds
   python3 hotaisle_alert.py --test     send a test notification and exit
 """
 import json, os, sys, time, urllib.request
@@ -107,11 +108,14 @@ if __name__ == "__main__":
     elif "--loop" in sys.argv:
         i = sys.argv.index("--loop")
         every = int(sys.argv[i + 1]) if len(sys.argv) > i + 1 else 120
+        stop = time.time() + int(sys.argv[sys.argv.index("--for") + 1]) if "--for" in sys.argv else float("inf")
         while True:
             try:
                 check()
             except Exception as e:
                 print("check failed:", e, file=sys.stderr)
+            if time.time() + every > stop:
+                break
             time.sleep(every)
     else:
         check()
