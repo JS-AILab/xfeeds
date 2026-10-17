@@ -12,6 +12,7 @@ Env:
   NTFY_TOPIC             ntfy.sh topic to push to (phone app: ntfy)  [optional]
   SLACK_WEBHOOK_URL / DISCORD_WEBHOOK_URL                            [optional]
   TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID                              [optional]
+  WHATSAPP_PHONE + CALLMEBOT_API_KEY  WhatsApp via callmebot.com     [optional]
 
 Usage:
   python3 hotaisle_alert.py            check once (for cron / GitHub Actions)
@@ -19,7 +20,7 @@ Usage:
   python3 hotaisle_alert.py --loop 120 --for 840   same, but stop after 840 seconds
   python3 hotaisle_alert.py --test     send a test notification and exit
 """
-import json, os, sys, time, urllib.request
+import json, os, sys, time, urllib.parse, urllib.request
 
 API = "https://admin.hotaisle.app/api"
 STATE = os.environ.get("HOTAISLE_STATE", "hotaisle_state.json")
@@ -78,6 +79,10 @@ def notify(title, body):
         (env("TELEGRAM_BOT_TOKEN") and env("TELEGRAM_CHAT_ID"), lambda: post(
             f"https://api.telegram.org/bot{env('TELEGRAM_BOT_TOKEN')}/sendMessage",
             {"chat_id": env("TELEGRAM_CHAT_ID"), "text": f"{title}\n{body}"})),
+        (env("WHATSAPP_PHONE") and env("CALLMEBOT_API_KEY"), lambda: urllib.request.urlopen(
+            "https://api.callmebot.com/whatsapp.php?" + urllib.parse.urlencode(
+                {"phone": env("WHATSAPP_PHONE"), "text": f"{title}\n{body}", "apikey": env("CALLMEBOT_API_KEY")}),
+            timeout=30)),
     ]
     for enabled, send in channels:
         if enabled:

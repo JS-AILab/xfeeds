@@ -15,7 +15,7 @@ Limits: the feed only goes back a few days through this API, and it does not inc
 `hotaisle_alert.py` alerts when Hot Aisle has a 4-GPU or 8-GPU machine (VM or bare metal) available. It polls `admin.hotaisle.app/api/teams/<team>/{virtual_machines,bare_metal}/available/` and notifies once each time a config opens up.
 
 1. Get an API token and team handle from Hot Aisle (`ssh admin.hotaisle.app`).
-2. Pick a notification channel. The easiest is [ntfy](https://ntfy.sh): install the app, subscribe to a hard-to-guess topic name, and set `NTFY_TOPIC` to it. Slack, Discord and Telegram also work (see the script header).
+2. Pick a notification channel. The easiest is [ntfy](https://ntfy.sh): install the app, subscribe to a hard-to-guess topic name, and set `NTFY_TOPIC` to it. Slack, Discord, Telegram and WhatsApp (via [CallMeBot](https://www.callmebot.com/blog/free-api-whatsapp-messages/): set `WHATSAPP_PHONE` like `+15551234567` and `CALLMEBOT_API_KEY`) also work (see the script header).
 3. Run it:
    - Locally: `HOTAISLE_API_KEY=... HOTAISLE_TEAM_HANDLE=... NTFY_TOPIC=... python3 hotaisle_alert.py --loop 120`
    - On GitHub Actions: add those values as repo secrets. `.github/workflows/hotaisle-alert.yml` checks every 2 minutes (each scheduled run loops for ~14 minutes, since GitHub's minimum schedule is 5 minutes); trigger it by hand once from the Actions tab to check it works.
