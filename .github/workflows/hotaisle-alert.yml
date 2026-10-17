@@ -1,0 +1,43 @@
+name: Hot Aisle GPU alert
+
+on:
+  schedule:
+    # GitHub's minimum schedule is 5 min and runs often start late, so each run
+    # checks every 2 min for ~14 min; the next queued run picks up after it.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      test:
+        description: "Only send a test notification"
+        type: boolean
+        default: false
+
+concurrency: hotaisle-alert
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache/restore@v4
+        with:
+          path: hotaisle_state.json
+          key: hotaisle-state-${{ github.run_id }}
+          restore-keys: hotaisle-state-
+      - run: python3 hotaisle_alert.py ${{ inputs.test && '--test' || '--loop 120 --for 840' }}
+        env:
+          HOTAISLE_API_KEY: ${{ secrets.HOTAISLE_API_KEY }}
+          HOTAISLE_TEAM_HANDLE: ${{ secrets.HOTAISLE_TEAM_HANDLE }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
+          CALLMEBOT_API_KEY: ${{ secrets.CALLMEBOT_API_KEY }}
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: hotaisle_state.json
+          key: hotaisle-state-${{ github.run_id }}
