@@ -1,10 +1,9 @@
 name: Hot Aisle GPU alert
 
+# Manual runs only: the repo is private and a 2-minute schedule would use far
+# more Actions minutes than the free plan includes. Run the checker locally
+# instead (see README). To re-enable, add:  schedule: [{cron: "*/5 * * * *"}]
 on:
-  schedule:
-    # GitHub's minimum schedule is 5 min and runs often start late, so each run
-    # checks every 2 min for ~14 min; the next queued run picks up after it.
-    - cron: "*/5 * * * *"
   workflow_dispatch:
     inputs:
       test:
